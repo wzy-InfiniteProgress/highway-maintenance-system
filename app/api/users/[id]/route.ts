@@ -10,9 +10,6 @@
  *
  * 请求路径：/api/users/[id]
  *
- * 权限说明：
- * - 只有管理员（role=admin）才能访问此接口
- *
  * @date 2024
  */
 
@@ -21,25 +18,13 @@ import { dbUtils } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { hashPassword } from '@/lib/auth';
 
-/**
- * GET /api/users/[id]
- * 获取用户详情
- *
- * @description 根据用户 ID 查询详细信息（不包含密码）
- * 权限：仅管理员可访问
- *
- * @param params.id 用户 ID
- * @returns 用户详细信息
- */
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 获取 URL 参数中的用户 ID
     const { id } = await params;
 
-    // 验证 Token
     const token = request.cookies.get('token')?.value;
 
     if (!token) {
@@ -58,7 +43,6 @@ export async function GET(
       );
     }
 
-    // 检查管理员权限
     if (payload.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: { code: 'FORBIDDEN', message: '无权访问' } },
@@ -66,10 +50,8 @@ export async function GET(
       );
     }
 
-    // 查询用户详情
-    const user = dbUtils.user.findUnique({ id });
+    const user = await dbUtils.user.findUnique({ id });
 
-    // 用户不存在
     if (!user) {
       return NextResponse.json(
         { success: false, error: { code: 'USER_NOT_FOUND', message: '用户不存在' } },
@@ -86,9 +68,9 @@ export async function GET(
           email: user.email,
           role: user.role,
           department: user.department,
-          isActive: !!user.isActive,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt
+          isActive: !!user.is_active,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
         }
       }
     });
@@ -101,26 +83,13 @@ export async function GET(
   }
 }
 
-/**
- * PUT /api/users/[id]
- * 更新用户信息
- *
- * @description 根据用户 ID 更新用户信息
- * 权限：仅管理员可访问
- *
- * @param params.id 用户 ID
- * @param request.json 更新字段（username, email, password, role, department, isActive）
- * @returns 更新后的用户信息
- */
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 获取 URL 参数中的用户 ID
     const { id } = await params;
 
-    // 验证 Token
     const token = request.cookies.get('token')?.value;
 
     if (!token) {
@@ -139,7 +108,6 @@ export async function PUT(
       );
     }
 
-    // 检查管理员权限
     if (payload.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: { code: 'FORBIDDEN', message: '无权访问' } },
@@ -147,10 +115,8 @@ export async function PUT(
       );
     }
 
-    // 查询用户详情
-    const user = dbUtils.user.findUnique({ id });
+    const user = await dbUtils.user.findUnique({ id });
 
-    // 用户不存在
     if (!user) {
       return NextResponse.json(
         { success: false, error: { code: 'USER_NOT_FOUND', message: '用户不存在' } },
@@ -158,28 +124,23 @@ export async function PUT(
       );
     }
 
-    // 解析更新内容
     const body = await request.json();
     const { username, email, password, role, department, isActive } = body;
 
-    // 构建更新数据
     const updateData: any = {};
     if (username !== undefined) updateData.username = username;
     if (email !== undefined) updateData.email = email;
     if (role !== undefined) updateData.role = role;
     if (department !== undefined) updateData.department = department;
-    if (isActive !== undefined) updateData.isActive = isActive ? 1 : 0;
+    if (isActive !== undefined) updateData.is_active = isActive;
 
-    // 如果提供了新密码，则加密
     if (password) {
       updateData.password = await hashPassword(password);
     }
 
-    // 执行更新
-    dbUtils.user.update(id, updateData);
+    await dbUtils.user.update(id, updateData);
 
-    // 获取更新后的用户
-    const updatedUser = dbUtils.user.findUnique({ id });
+    const updatedUser = await dbUtils.user.findUnique({ id });
 
     return NextResponse.json({
       success: true,
@@ -190,9 +151,9 @@ export async function PUT(
           email: updatedUser!.email,
           role: updatedUser!.role,
           department: updatedUser!.department,
-          isActive: !!updatedUser!.isActive,
-          createdAt: updatedUser!.createdAt,
-          updatedAt: updatedUser!.updatedAt
+          isActive: !!updatedUser!.is_active,
+          createdAt: updatedUser!.created_at,
+          updatedAt: updatedUser!.updated_at
         }
       }
     });
@@ -205,25 +166,13 @@ export async function PUT(
   }
 }
 
-/**
- * DELETE /api/users/[id]
- * 删除用户
- *
- * @description 根据用户 ID 删除用户账号
- * 权限：仅管理员可访问
- *
- * @param params.id 用户 ID
- * @returns 删除成功消息
- */
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // 获取 URL 参数中的用户 ID
     const { id } = await params;
 
-    // 验证 Token
     const token = request.cookies.get('token')?.value;
 
     if (!token) {
@@ -242,7 +191,6 @@ export async function DELETE(
       );
     }
 
-    // 检查管理员权限
     if (payload.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: { code: 'FORBIDDEN', message: '无权访问' } },
@@ -250,10 +198,8 @@ export async function DELETE(
       );
     }
 
-    // 查询用户详情
-    const user = dbUtils.user.findUnique({ id });
+    const user = await dbUtils.user.findUnique({ id });
 
-    // 用户不存在
     if (!user) {
       return NextResponse.json(
         { success: false, error: { code: 'USER_NOT_FOUND', message: '用户不存在' } },
@@ -261,8 +207,7 @@ export async function DELETE(
       );
     }
 
-    // 执行删除
-    dbUtils.user.delete(id);
+    await dbUtils.user.delete(id);
 
     return NextResponse.json({
       success: true,

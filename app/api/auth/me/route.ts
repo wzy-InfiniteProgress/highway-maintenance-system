@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 从数据库查询用户信息
-    const user = dbUtils.user.findUnique({ id: payload.userId });
+    const user = await dbUtils.user.findUnique({ id: payload.userId });
 
     // 用户不存在（可能被删除）
     if (!user) {
@@ -75,9 +75,9 @@ export async function GET(request: NextRequest) {
           email: user.email,
           role: user.role,
           department: user.department,
-          isActive: !!user.isActive,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt
+          isActive: !!user.is_active,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
         }
       }
     });

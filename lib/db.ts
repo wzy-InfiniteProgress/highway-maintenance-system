@@ -1,27 +1,31 @@
 /**
  * =====================================================
- * 数据库模块 - SQLite 数据库操作封装
+ * 数据库模块 - Supabase PostgreSQL 数据库操作封装
  * =====================================================
  *
  * 功能说明：
- * - 使用 better-sqlite3 操作本地 SQLite 数据库
+ * - 使用 @supabase/supabase-js 连接 Supabase PostgreSQL 数据库
  * - 提供各表的 CRUD 操作封装
  * - 支持分页、筛选、统计等查询
  *
- * 数据库文件位置：prisma/dev.db
+ * Supabase 配置：
+ * - Project URL: https://db.eogcfmczanqkfisjzkyp.supabase.co
  *
  * @author 系统自动生成
  * @date 2024
  */
 
-import Database from 'better-sqlite3';
-import path from 'path';
+import { createClient } from '@supabase/supabase-js';
 
-// 数据库文件路径
-const dbPath = path.join(process.cwd(), 'prisma', 'dev.db');
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://db.eogcfmczanqkfisjzkyp.supabase.co';
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-// 创建数据库连接
-const db = new Database(dbPath);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false
+  }
+});
 
 /* =====================================================
  * 数据模型接口定义
@@ -29,614 +33,619 @@ const db = new Database(dbPath);
 
 /** 用户模型 */
 export interface User {
-  id: string;                    // 用户ID
-  username: string;              // 用户名
-  email: string;                 // 邮箱
-  password: string;              // 密码（加密存储）
-  role: string;                  // 角色：admin-管理员, user-普通用户
-  department: string | null;    // 部门
-  isActive: number;              // 是否激活：1-激活, 0-未激活
-  createdAt: string;            // 创建时间
-  updatedAt: string;             // 更新时间
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  role: string;
+  department: string | null;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 /** 维护心得/帖子模型 */
 export interface Post {
-  id: string;                    // 帖子ID
-  title: string;                  // 标题
-  content: string;               // 内容（富文本HTML）
-  category: string;              // 分类
-  tags: string;                  // 标签（JSON数组字符串）
-  authorId: string;              // 作者ID
-  isPublic: number;              // 是否公开：1-公开, 0-私有
-  views: number;                 // 浏览次数
-  createdAt: string;            // 创建时间
-  updatedAt: string;             // 更新时间
+  id: string;
+  title: string;
+  content: string;
+  category: string;
+  tags: string;
+  author_id: string | null;
+  is_public: boolean;
+  views: number;
+  created_at: string;
+  updated_at: string;
 }
 
 /** 帖子分类模型 */
 export interface Category {
-  id: number;                    // 分类ID
-  name: string;                  // 分类名称
-  description: string | null;    // 分类描述
-  createdAt: string;            // 创建时间
+  id: number;
+  name: string;
+  description: string | null;
+  created_at: string;
 }
 
 /** 设备模型 */
 export interface Equipment {
-  id: string;                    // 设备ID
-  name: string;                  // 设备名称
-  model: string;                 // 设备型号
-  manufacturer: string;          // 制造商
-  installDate: string;           // 安装日期
-  location: string;              // 安装位置
-  department: string;            // 所属部门
-  status: string;               // 状态：active-正常, inactive-停用, maintenance-维护中
-  ip: string | null;             // IP地址
-  createdAt: string;              // 创建时间
-  updatedAt: string;             // 更新时间
+  id: string;
+  name: string;
+  model: string | null;
+  manufacturer: string | null;
+  install_date: string | null;
+  location: string | null;
+  department: string | null;
+  status: string;
+  ip: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /** 维护计划模型 */
 export interface MaintenancePlan {
-  id: string;                    // 计划ID
-  equipmentId: string;          // 关联设备ID
-  title: string;                 // 计划标题
-  description: string;           // 计划描述
-  scheduleType: string;          // 计划类型：daily-每日, weekly-每周, monthly-每月, yearly-每年
-  nextMaintenanceDate: string;    // 下次维护日期
-  assigneeId: string;           // 负责人ID
-  status: string;               // 状态：pending-待执行, in_progress-执行中, completed-已完成
-  createdAt: string;            // 创建时间
-  updatedAt: string;             // 更新时间
+  id: string;
+  equipment_id: string | null;
+  title: string;
+  description: string | null;
+  schedule_type: string | null;
+  next_maintenance_date: string | null;
+  assignee_id: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 /** 故障记录模型 */
 export interface FaultRecord {
-  id: string;                    // 故障ID
-  equipmentId: string;           // 关联设备ID
-  title: string;                 // 故障标题
-  symptoms: string;             // 故障现象
-  causes: string;                // 故障原因
-  solutions: string;            // 解决方案
-  faultDate: string;            // 故障日期
-  resolvedDate: string | null;   // 解决日期
-  status: string;               // 状态：pending-待处理, handling-处理中, resolved-已解决
-  createdAt: string;            // 创建时间
-  updatedAt: string;             // 更新时间
+  id: string;
+  equipment_id: string | null;
+  title: string;
+  symptoms: string | null;
+  causes: string | null;
+  solutions: string | null;
+  fault_date: string | null;
+  resolved_date: string | null;
+  status: string;
+  created_at: string;
+  updated_at: string;
 }
 
 /** 知识库模型 */
 export interface KnowledgeBase {
-  id: string;                    // 知识库ID
-  title: string;                 // 标题
-  symptoms: string;             // 故障现象（富文本）
-  causes: string;                // 故障原因（富文本）
-  solutions: string;            // 解决方案（富文本）
-  attachments: string;          // 附件
-  tags: string;                 // 标签（JSON数组字符串）
-  category: string;             // 分类
-  authorId: string;              // 作者ID
-  createdAt: string;            // 创建时间
-  updatedAt: string;             // 更新时间
+  id: string;
+  title: string;
+  symptoms: string | null;
+  causes: string | null;
+  solutions: string | null;
+  attachments: string | null;
+  tags: any;
+  category: string | null;
+  author_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /* =====================================================
  * 数据库操作工具类
  * ===================================================== */
 
-/**
- * 用户表操作
- * - findUnique: 按用户名或ID查询单个用户
- * - findMany: 查询所有用户
- * - create: 创建用户
- * - update: 更新用户信息
- * - delete: 删除用户
- * - count: 统计用户数量
- */
 export const dbUtils = {
   user: {
-    /** 根据用户名或ID查找用户 */
-    findUnique: (where: { username?: string; id?: string }): User | undefined => {
+    findUnique: async (where: { username?: string; id?: string }): Promise<User | null> => {
       if (where.username) {
-        const stmt = db.prepare('SELECT * FROM User WHERE username = ?');
-        return stmt.get(where.username) as User | undefined;
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('username', where.username)
+          .single();
+        if (error) return null;
+        return data as User;
       }
       if (where.id) {
-        const stmt = db.prepare('SELECT * FROM User WHERE id = ?');
-        return stmt.get(where.id) as User | undefined;
+        const { data, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', where.id)
+          .single();
+        if (error) return null;
+        return data as User;
       }
-      return undefined;
+      return null;
     },
 
-    /** 查询所有用户 */
-    findMany: (): User[] => {
-      const stmt = db.prepare('SELECT * FROM User');
-      return stmt.all() as User[];
+    findMany: async (): Promise<User[]> => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) return [];
+      return data as User[];
     },
 
-    /** 创建新用户 */
-    create: (data: Omit<User, 'id' | 'createdAt' | 'updatedAt'>): User => {
-      const id = `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const now = new Date().toISOString();
-      const stmt = db.prepare(`
-        INSERT INTO User (id, username, email, password, role, department, isActive, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-      stmt.run(id, data.username, data.email, data.password, data.role, data.department, data.isActive, now, now);
-      return { ...data, id, createdAt: now, updatedAt: now };
+    create: async (data: Omit<User, 'id' | 'created_at' | 'updated_at'>): Promise<User> => {
+      const { data: result, error } = await supabase
+        .from('users')
+        .insert([data])
+        .select()
+        .single();
+      if (error) throw error;
+      return result as User;
     },
 
-    /** 更新用户信息 */
-    update: (id: string, data: Partial<User>): void => {
-      const now = new Date().toISOString();
-      const fields = Object.keys(data).filter(key => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
-      const values = fields.map(key => data[key as keyof User]);
-      const setClause = fields.map(key => `${key} = ?`).join(', ');
-      const stmt = db.prepare(`UPDATE User SET ${setClause}, updatedAt = ? WHERE id = ?`);
-      stmt.run(...values, now, id);
+    update: async (id: string, data: Partial<User>): Promise<void> => {
+      const { error } = await supabase
+        .from('users')
+        .update(data)
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 删除用户 */
-    delete: (id: string): void => {
-      const stmt = db.prepare('DELETE FROM User WHERE id = ?');
-      stmt.run(id);
+    delete: async (id: string): Promise<void> => {
+      const { error } = await supabase
+        .from('users')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 统计用户数量 */
-    count: (): number => {
-      const stmt = db.prepare('SELECT COUNT(*) as count FROM User');
-      const result = stmt.get() as { count: number };
-      return result.count;
+    count: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true });
+      if (error) return 0;
+      return count || 0;
     }
   },
 
-  /**
-   * 维护心得/帖子表操作
-   */
   post: {
-    /** 根据ID查询帖子 */
-    findUnique: (id: string): Post | undefined => {
-      const stmt = db.prepare('SELECT * FROM Post WHERE id = ?');
-      return stmt.get(id) as Post | undefined;
+    findUnique: async (id: string): Promise<Post | null> => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) return null;
+      return data as Post;
     },
 
-    /**
-     * 分页查询帖子
-     * @param params.page 页码
-     * @param params.pageSize 每页数量
-     * @param params.category 按分类筛选
-     * @param params.authorId 按作者筛选
-     */
-    findMany: (params?: { page?: number; pageSize?: number; category?: string; authorId?: string }): { posts: Post[]; total: number } => {
+    findMany: async (params?: { page?: number; pageSize?: number; category?: string; authorId?: string }): Promise<{ posts: Post[]; total: number }> => {
       const page = params?.page || 1;
       const pageSize = params?.pageSize || 10;
       const offset = (page - 1) * pageSize;
 
-      let whereClause = 'WHERE 1=1';
-      const queryParams: any[] = [];
+      let query = supabase.from('posts').select('*', { count: 'exact' });
 
       if (params?.category) {
-        whereClause += ' AND category = ?';
-        queryParams.push(params.category);
+        query = query.eq('category', params.category);
       }
-
       if (params?.authorId) {
-        whereClause += ' AND authorId = ?';
-        queryParams.push(params.authorId);
+        query = query.eq('author_id', params.authorId);
       }
 
-      const countStmt = db.prepare(`SELECT COUNT(*) as total FROM Post ${whereClause}`);
-      const { total } = countStmt.get(...queryParams) as { total: number };
+      const { data, error, count } = await query
+        .order('created_at', { ascending: false })
+        .range(offset, offset + pageSize - 1);
 
-      const stmt = db.prepare(`
-        SELECT * FROM Post ${whereClause}
-        ORDER BY createdAt DESC
-        LIMIT ? OFFSET ?
-      `);
-      const posts = stmt.all(...queryParams, pageSize, offset) as Post[];
-
-      return { posts, total };
+      if (error) return { posts: [], total: 0 };
+      return { posts: data as Post[], total: count || 0 };
     },
 
-    /** 创建帖子 */
-    create: (data: Omit<Post, 'id' | 'createdAt' | 'updatedAt'>): Post => {
-      const id = `post-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const now = new Date().toISOString();
-      const stmt = db.prepare(`
-        INSERT INTO Post (id, title, content, category, tags, authorId, isPublic, views, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-      stmt.run(id, data.title, data.content, data.category, data.tags, data.authorId, data.isPublic, data.views, now, now);
-      return { ...data, id, createdAt: now, updatedAt: now };
+    create: async (data: Omit<Post, 'id' | 'created_at' | 'updated_at'>): Promise<Post> => {
+      const { data: result, error } = await supabase
+        .from('posts')
+        .insert([data])
+        .select()
+        .single();
+      if (error) throw error;
+      return result as Post;
     },
 
-    /** 更新帖子 */
-    update: (id: string, data: Partial<Post>): void => {
-      const now = new Date().toISOString();
-      const fields = Object.keys(data).filter(key => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
-      const values = fields.map(key => data[key as keyof Post]);
-      const setClause = fields.map(key => `${key} = ?`).join(', ');
-      const stmt = db.prepare(`UPDATE Post SET ${setClause}, updatedAt = ? WHERE id = ?`);
-      stmt.run(...values, now, id);
+    update: async (id: string, data: Partial<Post>): Promise<void> => {
+      const { error } = await supabase
+        .from('posts')
+        .update(data)
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 删除帖子 */
-    delete: (id: string): void => {
-      const stmt = db.prepare('DELETE FROM Post WHERE id = ?');
-      stmt.run(id);
+    delete: async (id: string): Promise<void> => {
+      const { error } = await supabase
+        .from('posts')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 增加浏览次数 */
-    incrementViews: (id: string): void => {
-      const stmt = db.prepare('UPDATE Post SET views = views + 1 WHERE id = ?');
-      stmt.run(id);
+    incrementViews: async (id: string): Promise<void> => {
+      const { error } = await supabase.rpc('increment_post_views', { post_id: id });
+      if (error) {
+        const { error: updateError } = await supabase
+          .from('posts')
+          .update({ views: 1 })
+          .eq('id', id);
+        if (updateError) console.error('Failed to increment views:', updateError);
+      }
     },
 
-    /** 统计帖子总数 */
-    count: (): number => {
-      const stmt = db.prepare('SELECT COUNT(*) as count FROM Post');
-      const result = stmt.get() as { count: number };
-      return result.count;
+    count: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from('posts')
+        .select('*', { count: 'exact', head: true });
+      if (error) return 0;
+      return count || 0;
     },
 
-    /** 获取总浏览量 */
-    getTotalViews: (): number => {
-      const stmt = db.prepare('SELECT SUM(views) as total FROM Post');
-      const result = stmt.get() as { total: number };
-      return result.total || 0;
+    getTotalViews: async (): Promise<number> => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('views');
+      if (error) return 0;
+      return data.reduce((sum, post) => sum + (post.views || 0), 0);
     },
 
-    /** 按分类统计 */
-    getCategoryStats: (): { category: string; count: number }[] => {
-      const stmt = db.prepare('SELECT category, COUNT(*) as count FROM Post GROUP BY category');
-      return stmt.all() as { category: string; count: number }[];
+    getCategoryStats: async (): Promise<{ category: string; count: number }[]> => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('category');
+      if (error) return [];
+      const stats: Record<string, number> = {};
+      data.forEach(post => {
+        const cat = post.category || '未分类';
+        stats[cat] = (stats[cat] || 0) + 1;
+      });
+      return Object.entries(stats).map(([category, count]) => ({ category, count }));
     },
 
-    /** 获取最新帖子 */
-    getRecentPosts: (limit: number = 5): Post[] => {
-      const stmt = db.prepare('SELECT * FROM Post ORDER BY createdAt DESC LIMIT ?');
-      return stmt.all(limit) as Post[];
+    getRecentPosts: async (limit: number = 5): Promise<Post[]> => {
+      const { data, error } = await supabase
+        .from('posts')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(limit);
+      if (error) return [];
+      return data as Post[];
     }
   },
 
-  /**
-   * 帖子分类表操作
-   */
   category: {
-    /** 查询所有分类 */
-    findMany: (): Category[] => {
-      const stmt = db.prepare('SELECT * FROM Category');
-      return stmt.all() as Category[];
+    findMany: async (): Promise<Category[]> => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+      if (error) return [];
+      return data as Category[];
     },
 
-    /** 根据名称查询分类 */
-    findUnique: (name: string): Category | undefined => {
-      const stmt = db.prepare('SELECT * FROM Category WHERE name = ?');
-      return stmt.get(name) as Category | undefined;
+    findUnique: async (name: string): Promise<Category | null> => {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('name', name)
+        .single();
+      if (error) return null;
+      return data as Category;
     }
   },
 
-  /**
-   * 设备档案表操作
-   */
   equipment: {
-    /** 根据ID查询设备 */
-    findUnique: (id: string): Equipment | undefined => {
-      const stmt = db.prepare('SELECT * FROM Equipment WHERE id = ?');
-      return stmt.get(id) as Equipment | undefined;
+    findUnique: async (id: string): Promise<Equipment | null> => {
+      const { data, error } = await supabase
+        .from('equipment')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) return null;
+      return data as Equipment;
     },
 
-    /**
-     * 查询设备列表
-     * @param params.status 按状态筛选
-     * @param params.department 按部门筛选
-     */
-    findMany: (params?: { status?: string; department?: string }): Equipment[] => {
-      let whereClause = 'WHERE 1=1';
-      const queryParams: any[] = [];
+    findMany: async (params?: { status?: string; department?: string }): Promise<Equipment[]> => {
+      let query = supabase.from('equipment').select('*');
 
       if (params?.status) {
-        whereClause += ' AND status = ?';
-        queryParams.push(params.status);
+        query = query.eq('status', params.status);
       }
-
       if (params?.department) {
-        whereClause += ' AND department = ?';
-        queryParams.push(params.department);
+        query = query.eq('department', params.department);
       }
 
-      const stmt = db.prepare(`SELECT * FROM Equipment ${whereClause} ORDER BY createdAt DESC`);
-      return stmt.all(...queryParams) as Equipment[];
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) return [];
+      return data as Equipment[];
     },
 
-    /** 创建设备 */
-    create: (data: Omit<Equipment, 'id' | 'createdAt' | 'updatedAt'>): Equipment => {
-      const id = `equipment-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const now = new Date().toISOString();
-      const stmt = db.prepare(`
-        INSERT INTO Equipment (id, name, model, manufacturer, installDate, location, department, status, ip, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-      stmt.run(id, data.name, data.model, data.manufacturer, data.installDate, data.location, data.department, data.status, data.ip || null, now, now);
-      return { ...data, id, createdAt: now, updatedAt: now };
+    create: async (data: Omit<Equipment, 'id' | 'created_at' | 'updated_at'>): Promise<Equipment> => {
+      const { data: result, error } = await supabase
+        .from('equipment')
+        .insert([data])
+        .select()
+        .single();
+      if (error) throw error;
+      return result as Equipment;
     },
 
-    /** 更新设备 */
-    update: (id: string, data: Partial<Equipment>): void => {
-      const now = new Date().toISOString();
-      const fields = Object.keys(data).filter(key => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
-      const values = fields.map(key => data[key as keyof Equipment]);
-      const setClause = fields.map(key => `${key} = ?`).join(', ');
-      const stmt = db.prepare(`UPDATE Equipment SET ${setClause}, updatedAt = ? WHERE id = ?`);
-      stmt.run(...values, now, id);
+    update: async (id: string, data: Partial<Equipment>): Promise<void> => {
+      const { error } = await supabase
+        .from('equipment')
+        .update(data)
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 删除设备 */
-    delete: (id: string): void => {
-      const stmt = db.prepare('DELETE FROM Equipment WHERE id = ?');
-      stmt.run(id);
+    delete: async (id: string): Promise<void> => {
+      const { error } = await supabase
+        .from('equipment')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 统计设备数量 */
-    count: (): number => {
-      const stmt = db.prepare('SELECT COUNT(*) as count FROM Equipment');
-      const result = stmt.get() as { count: number };
-      return result.count;
+    count: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from('equipment')
+        .select('*', { count: 'exact', head: true });
+      if (error) return 0;
+      return count || 0;
     },
 
-    /** 按状态统计 */
-    getStatusStats: (): { status: string; count: number }[] => {
-      const stmt = db.prepare('SELECT status, COUNT(*) as count FROM Equipment GROUP BY status');
-      return stmt.all() as { status: string; count: number }[];
+    getStatusStats: async (): Promise<Record<string, number>> => {
+      const { data, error } = await supabase
+        .from('equipment')
+        .select('status');
+      if (error) return {};
+      const stats: Record<string, number> = {};
+      data.forEach(item => {
+        const status = item.status || 'unknown';
+        stats[status] = (stats[status] || 0) + 1;
+      });
+      return stats;
     }
   },
 
-  /**
-   * 维护计划表操作
-   */
   maintenancePlan: {
-    /** 根据ID查询计划 */
-    findUnique: (id: string): MaintenancePlan | undefined => {
-      const stmt = db.prepare('SELECT * FROM MaintenancePlan WHERE id = ?');
-      return stmt.get(id) as MaintenancePlan | undefined;
+    findUnique: async (id: string): Promise<MaintenancePlan | null> => {
+      const { data, error } = await supabase
+        .from('maintenance_plan')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) return null;
+      return data as MaintenancePlan;
     },
 
-    /**
-     * 查询维护计划列表
-     * @param params.equipmentId 按设备筛选
-     * @param params.assigneeId 按负责人筛选
-     * @param params.status 按状态筛选
-     */
-    findMany: (params?: { equipmentId?: string; assigneeId?: string; status?: string }): MaintenancePlan[] => {
-      let whereClause = 'WHERE 1=1';
-      const queryParams: any[] = [];
+    findMany: async (params?: { equipmentId?: string; assigneeId?: string; status?: string }): Promise<MaintenancePlan[]> => {
+      let query = supabase.from('maintenance_plan').select('*');
 
       if (params?.equipmentId) {
-        whereClause += ' AND equipmentId = ?';
-        queryParams.push(params.equipmentId);
+        query = query.eq('equipment_id', params.equipmentId);
       }
-
       if (params?.assigneeId) {
-        whereClause += ' AND assigneeId = ?';
-        queryParams.push(params.assigneeId);
+        query = query.eq('assignee_id', params.assigneeId);
       }
-
       if (params?.status) {
-        whereClause += ' AND status = ?';
-        queryParams.push(params.status);
+        query = query.eq('status', params.status);
       }
 
-      const stmt = db.prepare(`SELECT * FROM MaintenancePlan ${whereClause} ORDER BY nextMaintenanceDate ASC`);
-      return stmt.all(...queryParams) as MaintenancePlan[];
+      const { data, error } = await query.order('next_maintenance_date', { ascending: true });
+      if (error) return [];
+      return data as MaintenancePlan[];
     },
 
-    /** 创建维护计划 */
-    create: (data: Omit<MaintenancePlan, 'id' | 'createdAt' | 'updatedAt'>): MaintenancePlan => {
-      const id = `plan-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const now = new Date().toISOString();
-      const stmt = db.prepare(`
-        INSERT INTO MaintenancePlan (id, equipmentId, title, description, scheduleType, nextMaintenanceDate, assigneeId, status, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-      stmt.run(id, data.equipmentId, data.title, data.description, data.scheduleType, data.nextMaintenanceDate, data.assigneeId, data.status, now, now);
-      return { ...data, id, createdAt: now, updatedAt: now };
+    create: async (data: Omit<MaintenancePlan, 'id' | 'created_at' | 'updated_at'>): Promise<MaintenancePlan> => {
+      const { data: result, error } = await supabase
+        .from('maintenance_plan')
+        .insert([data])
+        .select()
+        .single();
+      if (error) throw error;
+      return result as MaintenancePlan;
     },
 
-    /** 更新维护计划 */
-    update: (id: string, data: Partial<MaintenancePlan>): void => {
-      const now = new Date().toISOString();
-      const fields = Object.keys(data).filter(key => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
-      const values = fields.map(key => data[key as keyof MaintenancePlan]);
-      const setClause = fields.map(key => `${key} = ?`).join(', ');
-      const stmt = db.prepare(`UPDATE MaintenancePlan SET ${setClause}, updatedAt = ? WHERE id = ?`);
-      stmt.run(...values, now, id);
+    update: async (id: string, data: Partial<MaintenancePlan>): Promise<void> => {
+      const { error } = await supabase
+        .from('maintenance_plan')
+        .update(data)
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 删除维护计划 */
-    delete: (id: string): void => {
-      const stmt = db.prepare('DELETE FROM MaintenancePlan WHERE id = ?');
-      stmt.run(id);
+    delete: async (id: string): Promise<void> => {
+      const { error } = await supabase
+        .from('maintenance_plan')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 统计计划数量 */
-    count: (): number => {
-      const stmt = db.prepare('SELECT COUNT(*) as count FROM MaintenancePlan');
-      const result = stmt.get() as { count: number };
-      return result.count;
+    count: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from('maintenance_plan')
+        .select('*', { count: 'exact', head: true });
+      if (error) return 0;
+      return count || 0;
     },
 
-    /** 按状态统计 */
-    getStatusStats: (): { status: string; count: number }[] => {
-      const stmt = db.prepare('SELECT status, COUNT(*) as count FROM MaintenancePlan GROUP BY status');
-      return stmt.all() as { status: string; count: number }[];
+    getStatusStats: async (): Promise<Record<string, number>> => {
+      const { data, error } = await supabase
+        .from('maintenance_plan')
+        .select('status');
+      if (error) return {};
+      const stats: Record<string, number> = {};
+      data.forEach(item => {
+        const status = item.status || 'unknown';
+        stats[status] = (stats[status] || 0) + 1;
+      });
+      return stats;
     },
 
-    /** 获取即将到期的维护计划 */
-    getUpcoming: (limit: number = 5): MaintenancePlan[] => {
+    getUpcoming: async (limit: number = 5): Promise<MaintenancePlan[]> => {
       const today = new Date().toISOString().split('T')[0];
-      const stmt = db.prepare('SELECT * FROM MaintenancePlan WHERE nextMaintenanceDate >= ? AND status = ? ORDER BY nextMaintenanceDate ASC LIMIT ?');
-      return stmt.all(today, 'pending', limit) as MaintenancePlan[];
+      const { data, error } = await supabase
+        .from('maintenance_plan')
+        .select('*')
+        .gte('next_maintenance_date', today)
+        .eq('status', 'pending')
+        .order('next_maintenance_date', { ascending: true })
+        .limit(limit);
+      if (error) return [];
+      return data as MaintenancePlan[];
     }
   },
 
-  /**
-   * 故障记录表操作
-   */
   faultRecord: {
-    /** 根据ID查询故障 */
-    findUnique: (id: string): FaultRecord | undefined => {
-      const stmt = db.prepare('SELECT * FROM FaultRecord WHERE id = ?');
-      return stmt.get(id) as FaultRecord | undefined;
+    findUnique: async (id: string): Promise<FaultRecord | null> => {
+      const { data, error } = await supabase
+        .from('fault_record')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) return null;
+      return data as FaultRecord;
     },
 
-    /**
-     * 查询故障记录列表
-     * @param params.equipmentId 按设备筛选
-     * @param params.status 按状态筛选
-     */
-    findMany: (params?: { equipmentId?: string; status?: string }): FaultRecord[] => {
-      let whereClause = 'WHERE 1=1';
-      const queryParams: any[] = [];
+    findMany: async (params?: { equipmentId?: string; status?: string }): Promise<FaultRecord[]> => {
+      let query = supabase.from('fault_record').select('*');
 
       if (params?.equipmentId) {
-        whereClause += ' AND equipmentId = ?';
-        queryParams.push(params.equipmentId);
+        query = query.eq('equipment_id', params.equipmentId);
       }
-
       if (params?.status) {
-        whereClause += ' AND status = ?';
-        queryParams.push(params.status);
+        query = query.eq('status', params.status);
       }
 
-      const stmt = db.prepare(`SELECT * FROM FaultRecord ${whereClause} ORDER BY faultDate DESC`);
-      return stmt.all(...queryParams) as FaultRecord[];
+      const { data, error } = await query.order('fault_date', { ascending: false });
+      if (error) return [];
+      return data as FaultRecord[];
     },
 
-    /** 创建故障记录 */
-    create: (data: Omit<FaultRecord, 'id' | 'createdAt' | 'updatedAt'>): FaultRecord => {
-      const id = `fault-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const now = new Date().toISOString();
-      const stmt = db.prepare(`
-        INSERT INTO FaultRecord (id, equipmentId, title, symptoms, causes, solutions, faultDate, resolvedDate, status, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-      stmt.run(id, data.equipmentId, data.title, data.symptoms, data.causes, data.solutions, data.faultDate, data.resolvedDate, data.status, now, now);
-      return { ...data, id, createdAt: now, updatedAt: now };
+    create: async (data: Omit<FaultRecord, 'id' | 'created_at' | 'updated_at'>): Promise<FaultRecord> => {
+      const { data: result, error } = await supabase
+        .from('fault_record')
+        .insert([data])
+        .select()
+        .single();
+      if (error) throw error;
+      return result as FaultRecord;
     },
 
-    /** 更新故障记录 */
-    update: (id: string, data: Partial<FaultRecord>): void => {
-      const now = new Date().toISOString();
-      const fields = Object.keys(data).filter(key => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
-      const values = fields.map(key => data[key as keyof FaultRecord]);
-      const setClause = fields.map(key => `${key} = ?`).join(', ');
-      const stmt = db.prepare(`UPDATE FaultRecord SET ${setClause}, updatedAt = ? WHERE id = ?`);
-      stmt.run(...values, now, id);
+    update: async (id: string, data: Partial<FaultRecord>): Promise<void> => {
+      const { error } = await supabase
+        .from('fault_record')
+        .update(data)
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 删除故障记录 */
-    delete: (id: string): void => {
-      const stmt = db.prepare('DELETE FROM FaultRecord WHERE id = ?');
-      stmt.run(id);
+    delete: async (id: string): Promise<void> => {
+      const { error } = await supabase
+        .from('fault_record')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 统计故障数量 */
-    count: (): number => {
-      const stmt = db.prepare('SELECT COUNT(*) as count FROM FaultRecord');
-      const result = stmt.get() as { count: number };
-      return result.count;
+    count: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from('fault_record')
+        .select('*', { count: 'exact', head: true });
+      if (error) return 0;
+      return count || 0;
     },
 
-    /** 按状态统计 */
-    getStatusStats: (): { status: string; count: number }[] => {
-      const stmt = db.prepare('SELECT status, COUNT(*) as count FROM FaultRecord GROUP BY status');
-      return stmt.all() as { status: string; count: number }[];
+    getStatusStats: async (): Promise<Record<string, number>> => {
+      const { data, error } = await supabase
+        .from('fault_record')
+        .select('status');
+      if (error) return {};
+      const stats: Record<string, number> = {};
+      data.forEach(item => {
+        const status = item.status || 'unknown';
+        stats[status] = (stats[status] || 0) + 1;
+      });
+      return stats;
     },
 
-    /** 获取最新故障记录 */
-    getRecent: (limit: number = 5): FaultRecord[] => {
-      const stmt = db.prepare('SELECT * FROM FaultRecord ORDER BY faultDate DESC LIMIT ?');
-      return stmt.all(limit) as FaultRecord[];
+    getRecent: async (limit: number = 5): Promise<FaultRecord[]> => {
+      const { data, error } = await supabase
+        .from('fault_record')
+        .select('*')
+        .order('fault_date', { ascending: false })
+        .limit(limit);
+      if (error) return [];
+      return data as FaultRecord[];
     }
   },
 
-  /**
-   * 知识库表操作
-   */
   knowledgeBase: {
-    /** 根据ID查询知识库 */
-    findUnique: (id: string): KnowledgeBase | undefined => {
-      const stmt = db.prepare('SELECT * FROM KnowledgeBase WHERE id = ?');
-      return stmt.get(id) as KnowledgeBase | undefined;
+    findUnique: async (id: string): Promise<KnowledgeBase | null> => {
+      const { data, error } = await supabase
+        .from('knowledge_base')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) return null;
+      return data as KnowledgeBase;
     },
 
-    /**
-     * 查询知识库列表
-     * @param params.category 按分类筛选
-     * @param params.authorId 按作者筛选
-     */
-    findMany: (params?: { category?: string; authorId?: string }): KnowledgeBase[] => {
-      let whereClause = 'WHERE 1=1';
-      const queryParams: any[] = [];
+    findMany: async (params?: { category?: string; authorId?: string }): Promise<KnowledgeBase[]> => {
+      let query = supabase.from('knowledge_base').select('*');
 
       if (params?.category) {
-        whereClause += ' AND category = ?';
-        queryParams.push(params.category);
+        query = query.eq('category', params.category);
       }
-
       if (params?.authorId) {
-        whereClause += ' AND authorId = ?';
-        queryParams.push(params.authorId);
+        query = query.eq('author_id', params.authorId);
       }
 
-      const stmt = db.prepare(`SELECT * FROM KnowledgeBase ${whereClause} ORDER BY createdAt DESC`);
-      return stmt.all(...queryParams) as KnowledgeBase[];
+      const { data, error } = await query.order('created_at', { ascending: false });
+      if (error) return [];
+      return data as KnowledgeBase[];
     },
 
-    /** 创建知识库条目 */
-    create: (data: Omit<KnowledgeBase, 'id' | 'createdAt' | 'updatedAt'>): KnowledgeBase => {
-      const id = `kb-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const now = new Date().toISOString();
-      const stmt = db.prepare(`
-        INSERT INTO KnowledgeBase (id, title, symptoms, causes, solutions, attachments, tags, category, authorId, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `);
-      stmt.run(id, data.title, data.symptoms, data.causes, data.solutions, data.attachments, data.tags, data.category, data.authorId, now, now);
-      return { ...data, id, createdAt: now, updatedAt: now };
+    create: async (data: Omit<KnowledgeBase, 'id' | 'created_at' | 'updated_at'>): Promise<KnowledgeBase> => {
+      const { data: result, error } = await supabase
+        .from('knowledge_base')
+        .insert([data])
+        .select()
+        .single();
+      if (error) throw error;
+      return result as KnowledgeBase;
     },
 
-    /** 更新知识库 */
-    update: (id: string, data: Partial<KnowledgeBase>): void => {
-      const now = new Date().toISOString();
-      const fields = Object.keys(data).filter(key => key !== 'id' && key !== 'createdAt' && key !== 'updatedAt');
-      const values = fields.map(key => data[key as keyof KnowledgeBase]);
-      const setClause = fields.map(key => `${key} = ?`).join(', ');
-      const stmt = db.prepare(`UPDATE KnowledgeBase SET ${setClause}, updatedAt = ? WHERE id = ?`);
-      stmt.run(...values, now, id);
+    update: async (id: string, data: Partial<KnowledgeBase>): Promise<void> => {
+      const { error } = await supabase
+        .from('knowledge_base')
+        .update(data)
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 删除知识库 */
-    delete: (id: string): void => {
-      const stmt = db.prepare('DELETE FROM KnowledgeBase WHERE id = ?');
-      stmt.run(id);
+    delete: async (id: string): Promise<void> => {
+      const { error } = await supabase
+        .from('knowledge_base')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
     },
 
-    /** 统计知识库数量 */
-    count: (): number => {
-      const stmt = db.prepare('SELECT COUNT(*) as count FROM KnowledgeBase');
-      const result = stmt.get() as { count: number };
-      return result.count;
+    count: async (): Promise<number> => {
+      const { count, error } = await supabase
+        .from('knowledge_base')
+        .select('*', { count: 'exact', head: true });
+      if (error) return 0;
+      return count || 0;
     },
 
-    /** 搜索知识库 */
-    search: (keyword: string): KnowledgeBase[] => {
-      const stmt = db.prepare('SELECT * FROM KnowledgeBase WHERE title LIKE ? OR symptoms LIKE ? OR solutions LIKE ? ORDER BY createdAt DESC');
-      const pattern = `%${keyword}%`;
-      return stmt.all(pattern, pattern, pattern) as KnowledgeBase[];
+    search: async (keyword: string): Promise<KnowledgeBase[]> => {
+      const { data, error } = await supabase
+        .from('knowledge_base')
+        .select('*')
+        .or(`title.ilike.%${keyword}%,symptoms.ilike.%${keyword}%,solutions.ilike.%${keyword}%`)
+        .order('created_at', { ascending: false });
+      if (error) return [];
+      return data as KnowledgeBase[];
     }
   }
 };
 
-// 导出数据库实例
-export default db;
+export default supabase;

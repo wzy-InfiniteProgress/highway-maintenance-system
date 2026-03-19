@@ -23,15 +23,9 @@ import { hashPassword } from '@/lib/auth';
 /**
  * GET /api/users
  * 获取用户列表
- *
- * @description 获取所有用户的列表（不包含密码）
- * 权限：仅管理员可访问
- *
- * @returns 用户列表
  */
 export async function GET(request: NextRequest) {
   try {
-    // 验证 Token
     const token = request.cookies.get('token')?.value;
 
     if (!token) {
@@ -50,7 +44,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 检查管理员权限
     if (payload.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: { code: 'FORBIDDEN', message: '无权访问' } },
@@ -58,10 +51,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 获取所有用户
-    const users = dbUtils.user.findMany();
+    const users = await dbUtils.user.findMany();
 
-    // 返回用户列表（不包含密码）
     return NextResponse.json({
       success: true,
       data: {
@@ -71,9 +62,9 @@ export async function GET(request: NextRequest) {
           email: user.email,
           role: user.role,
           department: user.department,
-          isActive: !!user.isActive,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt
+          isActive: !!user.is_active,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
         }))
       }
     });
@@ -89,16 +80,9 @@ export async function GET(request: NextRequest) {
 /**
  * POST /api/users
  * 创建新用户
- *
- * @description 创建新的用户账号
- * 权限：仅管理员可访问
- *
- * @param request.json 用户信息（username, email, password, role, department）
- * @returns 创建成功的用户信息
  */
 export async function POST(request: NextRequest) {
   try {
-    // 验证 Token
     const token = request.cookies.get('token')?.value;
 
     if (!token) {
@@ -117,7 +101,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 检查管理员权限
     if (payload.role !== 'admin') {
       return NextResponse.json(
         { success: false, error: { code: 'FORBIDDEN', message: '无权访问' } },
@@ -125,11 +108,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 解析请求体
     const body = await request.json();
     const { username, email, password, role, department } = body;
 
-    // 验证必填字段
     if (!username || !email || !password) {
       return NextResponse.json(
         { success: false, error: { code: 'MISSING_FIELDS', message: '用户名、邮箱和密码不能为空' } },
@@ -137,8 +118,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 检查用户名是否已存在
-    const existingUser = dbUtils.user.findUnique({ username });
+    const existingUser = await dbUtils.user.findUnique({ username });
     if (existingUser) {
       return NextResponse.json(
         { success: false, error: { code: 'USER_EXISTS', message: '用户名已存在' } },
@@ -146,17 +126,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 加密密码
     const hashedPassword = await hashPassword(password);
 
-    // 创建用户
-    const user = dbUtils.user.create({
+    const user = await dbUtils.user.create({
       username,
       email,
       password: hashedPassword,
-      role: role || 'viewer',  // 默认角色为 viewer
+      role: role || 'viewer',
       department,
-      isActive: 1              // 默认激活
+      is_active: true
     });
 
     return NextResponse.json({
@@ -168,9 +146,9 @@ export async function POST(request: NextRequest) {
           email: user.email,
           role: user.role,
           department: user.department,
-          isActive: !!user.isActive,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt
+          isActive: !!user.is_active,
+          createdAt: user.created_at,
+          updatedAt: user.updated_at
         }
       }
     });

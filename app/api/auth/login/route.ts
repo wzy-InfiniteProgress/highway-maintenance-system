@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 查询用户
-    const user = dbUtils.user.findUnique({ username });
+    const user = await dbUtils.user.findUnique({ username });
 
     // 用户不存在
     if (!user) {
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 检查用户是否被禁用
-    if (!user.isActive) {
+    if (!user.is_active) {
       return NextResponse.json(
         { success: false, error: { code: 'USER_INACTIVE', message: '用户已被禁用' } },
         { status: 403 }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
           email: user.email,
           role: user.role,
           department: user.department,
-          isActive: !!user.isActive
+          isActive: !!user.is_active
         },
         token
       }
