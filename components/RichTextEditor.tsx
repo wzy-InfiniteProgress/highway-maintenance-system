@@ -104,7 +104,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
       },
       // 处理拖拽图片
       handleDrop: (view, event, slice, moved) => {
-        if (!moved && event.dataTransfer?.files?.length) {
+        if (!moved && event.dataTransfer?.files?.length && editor) {
           const file = event.dataTransfer.files[0];
           if (file.type.startsWith('image/')) {
             const reader = new FileReader();
@@ -121,7 +121,7 @@ export default function RichTextEditor({ content, onChange, placeholder }: RichT
       // 处理粘贴图片
       handlePaste: (view, event) => {
         const items = event.clipboardData?.items;
-        if (items) {
+        if (items && editor) {
           for (const item of items) {
             if (item.type.startsWith('image/')) {
               const file = item.getAsFile();
