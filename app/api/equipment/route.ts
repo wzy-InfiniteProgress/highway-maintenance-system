@@ -52,16 +52,12 @@ export async function GET(request: NextRequest) {
       const searchLower = search.toLowerCase();
       equipment = equipment.filter(e =>
         e.name.toLowerCase().includes(searchLower) ||
-        e.model.toLowerCase().includes(searchLower) ||
-        e.location.toLowerCase().includes(searchLower)
+        (e.model && e.model.toLowerCase().includes(searchLower)) ||
+        (e.location && e.location.toLowerCase().includes(searchLower))
       );
     }
 
-    const statusStats = await dbUtils.equipment.getStatusStats();
-    const statusCounts = statusStats.reduce((acc, stat) => {
-      acc[stat.status] = stat.count;
-      return acc;
-    }, {} as Record<string, number>);
+    const statusCounts = await dbUtils.equipment.getStatusStats();
 
     const departments = [...new Set(equipment.map(e => e.department).filter(Boolean))];
 
