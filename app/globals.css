@@ -1,0 +1,132 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+/* 隐藏所有 Next.js 开发环境指示器 */
+.nextjs-dev-turbolinks-progress-bar,
+#__nextjs-dev-turbolinks-progress-bar,
+[data-nextjs-turbopack],
+[data-nextjs-dev-turbopack],
+[data-turbopack-hub],
+[data-turbopack-message],
+.turbo-progress-bar,
+.__nextjs-dev-turbolinks-progress,
+#turbopack-hud,
+#turbopack-message,
+#nextjs-dev-turbolinks-progress,
+#nextjs-build-activity,
+#nextjs-build-activity-indicator {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  position: absolute !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* 确保移动端没有横向溢出 */
+html, body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+* {
+  max-width: 100vw;
+  box-sizing: border-box;
+}
+
+/* 修复 Ant Design 移动端适配 */
+.ant-layout {
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.ant-card {
+  word-wrap: break-word;
+  overflow: hidden;
+}
+
+/* 移动端优化 */
+@media (max-width: 768px) {
+  html, body {
+    width: 100%;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  .ant-layout-content {
+    overflow-x: hidden;
+  }
+
+  .ant-table {
+    font-size: 12px;
+    overflow-x: auto;
+  }
+
+  .ant-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .ant-table-thead > tr > th,
+  .ant-table-tbody > tr > td {
+    padding: 8px 4px;
+    white-space: nowrap;
+  }
+
+  .ant-modal {
+    max-width: calc(100vw - 32px) !important;
+    width: calc(100vw - 32px) !important;
+    margin: 16px auto;
+  }
+
+  .ant-modal-content {
+    overflow-x: hidden;
+  }
+
+  .ant-card-body {
+    padding: 12px;
+    overflow: hidden;
+  }
+
+  .ant-card-head {
+    padding: 0 12px;
+    min-height: auto;
+  }
+
+  .ant-row {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .ant-col {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+}
