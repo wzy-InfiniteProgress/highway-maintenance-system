@@ -41,42 +41,37 @@ import { dbUtils } from '@/lib/db';
  */
 export async function GET(request: NextRequest) {
   try {
-    // 解析查询参数
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status') || undefined;      // 状态筛选
-    const department = searchParams.get('department') || undefined; // 部门筛选
-    const search = searchParams.get('search') || undefined;      // 搜索关键词
+    const status = searchParams.get('status') || undefined;
+    const department = searchParams.get('department') || undefined;
+    const search = searchParams.get('search') || undefined;
 
-    // 从数据库获取设备列表
-    let equipment = dbUtils.equipment.findMany({ status, department });
+    let equipment = await dbUtils.equipment.findMany({ status, department });
 
-    // 如果有搜索关键词，进行模糊搜索匹配
     if (search) {
       const searchLower = search.toLowerCase();
       equipment = equipment.filter(e =>
-        e.name.toLowerCase().includes(searchLower) ||           // 匹配设备名称
-        e.model.toLowerCase().includes(searchLower) ||         // 匹配设备型号
-        e.location.toLowerCase().includes(searchLower)          // 匹配安装位置
+        e.name.toLowerCase().includes(searchLower) ||
+        e.model.toLowerCase().includes(searchLower) ||
+        e.location.toLowerCase().includes(searchLower)
       );
     }
 
-    // 统计各状态的设备数量
-    const statusStats = dbUtils.equipment.getStatusStats();
+    const statusStats = await dbUtils.equipment.getStatusStats();
     const statusCounts = statusStats.reduce((acc, stat) => {
       acc[stat.status] = stat.count;
       return acc;
     }, {} as Record<string, number>);
 
-    // 提取所有部门列表（去重）
     const departments = [...new Set(equipment.map(e => e.department).filter(Boolean))];
 
     return NextResponse.json({
       success: true,
       data: {
-        list: equipment,           // 设备列表
-        total: equipment.length,   // 设备总数
-        statusCounts,              // 各状态数量
-        departments                // 部门列表
+        list: equipment,
+        total: equipment.length,
+        statusCounts,
+        departments
       }
     });
   } catch (error) {
@@ -112,15 +107,15 @@ export async function POST(request: NextRequest) {
     }
 
     // 创建设备记录
-    const equipment = dbUtils.equipment.create({
-      name,                        // 设备名称
-      model,                       // 型号
-      manufacturer,                 // 制造商
-      installDate,                 // 安装日期
-      location,                    // 安装位置
-      department,                  // 所属部门
-      status: status || 'active', // 状态默认为正常
-      ip: ip || null              // IP 地址
+    const equipment = await dbUtils.equipment.create({
+      name,
+      model,
+      manufacturer,
+      install_date: installDate,
+      location,
+      department,
+      status: status || 'active',
+      ip: ip || null
     });
 
     return NextResponse.json({

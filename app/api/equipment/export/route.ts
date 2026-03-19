@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || undefined;
 
     // 获取设备列表
-    const equipment = dbUtils.equipment.findMany({ status });
+    const equipment = await dbUtils.equipment.findMany({ status });
 
     // CSV表头
     const headers = ['设备名称', '型号', '制造商', '安装日期', '安装位置', '所属部门', '状态', 'IP地址'];
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
         escapeCSV(e.name),
         escapeCSV(e.model),
         escapeCSV(e.manufacturer),
-        escapeCSV(e.installDate),
+        escapeCSV(e.install_date),
         escapeCSV(e.location),
         escapeCSV(e.department),
         escapeCSV(statusLabels[e.status] || e.status),
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
 }
 
 // 转义CSV特殊字符
-function escapeCSV(value: string): string {
+function escapeCSV(value: string | null | undefined): string {
   if (!value) return '';
   const str = String(value);
   if (str.includes(',') || str.includes('"') || str.includes('\n')) {

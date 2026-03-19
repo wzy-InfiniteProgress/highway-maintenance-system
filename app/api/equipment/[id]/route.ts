@@ -34,7 +34,7 @@ export async function GET(
     const { id } = await params;
 
     // 查询设备详情
-    const equipment = dbUtils.equipment.findUnique(id);
+    const equipment = await dbUtils.equipment.findUnique(id);
 
     // 设备不存在
     if (!equipment) {
@@ -78,7 +78,7 @@ export async function PUT(
     const body = await request.json();
 
     // 检查设备是否存在
-    const existing = dbUtils.equipment.findUnique(id);
+    const existing = await dbUtils.equipment.findUnique(id);
     if (!existing) {
       return NextResponse.json(
         { success: false, error: { code: 'NOT_FOUND', message: '设备不存在' } },
@@ -87,10 +87,10 @@ export async function PUT(
     }
 
     // 执行更新操作
-    dbUtils.equipment.update(id, body);
+    await dbUtils.equipment.update(id, body);
 
     // 获取更新后的设备信息
-    const updated = dbUtils.equipment.findUnique(id);
+    const updated = await dbUtils.equipment.findUnique(id);
     return NextResponse.json({
       success: true,
       data: updated
@@ -122,7 +122,7 @@ export async function DELETE(
     const { id } = await params;
 
     // 检查设备是否存在
-    const existing = dbUtils.equipment.findUnique(id);
+    const existing = await dbUtils.equipment.findUnique(id);
     if (!existing) {
       return NextResponse.json(
         { success: false, error: { code: 'NOT_FOUND', message: '设备不存在' } },
@@ -131,7 +131,7 @@ export async function DELETE(
     }
 
     // 执行删除操作
-    dbUtils.equipment.delete(id);
+    await dbUtils.equipment.delete(id);
 
     return NextResponse.json({
       success: true,

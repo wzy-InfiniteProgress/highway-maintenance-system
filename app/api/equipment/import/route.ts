@@ -52,11 +52,11 @@ export async function POST(request: NextRequest) {
       const rawStatus = item.status || 'active';
       const status = statusMap[rawStatus] || rawStatus;
 
-      const equipment = dbUtils.equipment.create({
+      const equipment = await dbUtils.equipment.create({
         name: item.name,
         model: item.model,
         manufacturer: item.manufacturer,
-        installDate: item.installDate,
+        install_date: item.installDate,
         location: item.location,
         department: item.department,
         status: status,
