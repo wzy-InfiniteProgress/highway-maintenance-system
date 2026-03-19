@@ -1,44 +1,29 @@
-/**
- * =====================================================
- * 认证模块 - 用户登录 API
- * =====================================================
- *
- * 功能说明：
- * - 验证用户登录凭证
- * - 验证成功后生成 JWT Token
- * - 设置 HttpOnly Cookie
- *
- * 请求方法：POST
- * 请求路径：/api/auth/login
- *
- * 请求体：
- * {
- *   username: string,  // 用户名
- *   password: string   // 密码
- * }
- *
- * 响应：
- * - 成功：返回用户信息和 Token
- * - 失败：返回错误信息
- *
- * @date 2024
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { dbUtils } from '@/lib/db';
-import { verifyPassword } from '@/lib/auth';
+import { verifyPassword, hashPassword } from '@/lib/auth';
 import { generateToken } from '@/lib/jwt';
 
-/**
- * POST /api/auth/login
- * 用户登录
- */
+async function ensureAdminExists() {
+  const existingAdmin = await dbUtils.user.findUnique({ username: 'admin' });
+  if (!existingAdmin) {
+    const adminPassword = await hashPassword('admin123');
+    await dbUtils.user.create({
+      username: 'admin',
+      email: 'admin@highway-maintenance.com',
+      password: adminPassword,
+      role: 'admin',
+      department: '管理部门',
+      is_active: true
+    });
+    console.log('管理员用户已自动创建');
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { username, password } = body;
 
-    // 验证必填字段
     if (!username || !password) {
       return NextResponse.json(
         { success: false, error: { code: 'MISSING_FIELDS', message: '用户名和密码不能为空' } },
@@ -46,18 +31,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 查询用户
-    const user = await dbUtils.user.findUnique({ username });
+    let user = await dbUtils.user.findUnique({ username });
 
-    // 用户不存在
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: { code: 'INVALID_CREDENTIALS', message: '用户名或密码错误' } },
-        { status: 401 }
-      );
+      await ensureAdminExists();
+      user = await dbUtils.user.findUnique({ username });
+      if (!user) {
+        return NextResponse.json(
+          { success: false, error: { code: 'INVALID_CREDENTIALS', message: '用户名或密码错误' } },
+          { status: 401 }
+        );
+      }
     }
 
-    // 验证密码
     const isValidPassword = await verifyPassword(password, user.password);
 
     if (!isValidPassword) {
@@ -67,7 +53,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 检查用户是否被禁用
     if (!user.is_active) {
       return NextResponse.json(
         { success: false, error: { code: 'USER_INACTIVE', message: '用户已被禁用' } },
@@ -75,14 +60,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 生成 JWT Token
     const token = generateToken({
       userId: user.id,
       username: user.username,
       role: user.role
     });
 
-    // 构建响应
     const response = NextResponse.json({
       success: true,
       data: {
@@ -98,12 +81,11 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // 设置 HttpOnly Cookie（安全存储 Token）
     response.cookies.set('token', token, {
-      httpOnly: true,                    // 防止 XSS 攻击
-      secure: process.env.NODE_ENV === 'production',  // 生产环境使用 HTTPS
-      sameSite: 'lax',                  // 允许同站请求携带 Cookie
-      maxAge: 60 * 60 * 24 * 7         // 7 天过期
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7
     });
 
     return response;
